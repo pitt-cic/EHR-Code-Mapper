@@ -1,0 +1,9 @@
+# Virtual environment
+.venv/
+
+# macOS
+.DS_Store
+
+# CDK
+infrastructure/node_modules/
+infrastructure/cdk.out/

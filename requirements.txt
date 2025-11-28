@@ -1,0 +1,4 @@
+boto3==1.40.69
+pandas
+pydantic
+pydantic-ai
