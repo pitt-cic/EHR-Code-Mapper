@@ -4,6 +4,7 @@ import json
 import pandas as pd
 import asyncio
 import time
+import os
 from concurrent.futures import ThreadPoolExecutor
 from pydantic_ai import Agent
 from pydantic import BaseModel
@@ -259,8 +260,28 @@ def process_batch(batch_data):
     return results
 
 # Load biomarker data
-biomarker_df = pd.read_csv('testFiles/short_test.csv')
-print("Input data loaded")
+while True:
+    file_path = input("Enter the path to your biomarker CSV file (or 'q' to quit): ").strip()
+    
+    if file_path.lower() == 'q':
+        print("Exiting.")
+        exit(0)
+    
+    if not os.path.exists(file_path):
+        print(f"Error: File {file_path} does not exist. Try again.")
+        continue
+    
+    if not file_path.lower().endswith('.csv'):
+        print("Error: File must be a CSV file. Try again.")
+        continue
+    
+    try:
+        biomarker_df = pd.read_csv(file_path)
+        print("Input data loaded")
+        break
+    except Exception as e:
+        print(f"Error reading CSV: {e}. Try again.")
+        continue
 
 # Prepare test cases using the embedding system
 print("Preparing test cases with embedding system")
@@ -357,5 +378,5 @@ for i in range(0, len(test_cases), batch_size):
 
 # Save mappings to CSV
 mappings_df = pd.DataFrame(all_mappings)
-mappings_df.to_csv('ehr_field_mappings.csv', index=False)
-print(f"Mapping complete. Created {len(all_mappings)} mappings saved to 'ehr_field_mappings.csv'")
+mappings_df.to_csv('ehr_code_mappings.csv', index=False)
+print(f"Mapping complete. Created {len(all_mappings)} mappings saved to 'ehr_code_mappings.csv'")

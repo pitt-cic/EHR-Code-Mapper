@@ -5,16 +5,23 @@ import pandas as pd
 import os
 
 def process_vectors():
-    # Get file path from user
-    file_path = input("Enter the path to your CSV file: ").strip()
-    
-    if not os.path.exists(file_path):
-        print(f"Error: File {file_path} does not exist")
-        return
-    
-    if not file_path.lower().endswith('.csv'):
-        print("Error: File must be a CSV file")
-        return
+    # Get file path from user with retry
+    while True:
+        file_path = input("Enter the path to your CSV file (or 'q' to quit): ").strip()
+        
+        if file_path.lower() == 'q':
+            print("Exiting.")
+            return
+        
+        if not os.path.exists(file_path):
+            print(f"Error: File {file_path} does not exist. Try again.")
+            continue
+        
+        if not file_path.lower().endswith('.csv'):
+            print("Error: File must be a CSV file. Try again.")
+            continue
+        
+        break
     
     # Initialize clients
     bedrock_client = boto3.client('bedrock-runtime', region_name="us-east-1")
