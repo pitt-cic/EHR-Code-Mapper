@@ -7,3 +7,8 @@
 # CDK
 infrastructure/node_modules/
 infrastructure/cdk.out/
+infrastructure/dist/
+
+# Generated output files
+ehr_code_mappings.csv
+ehr_code_mappings_fhir.json

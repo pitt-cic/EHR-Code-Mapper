@@ -1,0 +1,176 @@
+proprietary_code,proprietary_display,type,average,categories
+1,Tidal Volume Exhaled,numerical,196.22,
+2,PEEP Set,numerical,7.54,
+3,ETCO2,numerical,36.18,
+4,Ventilator Mode,categorical,,Other: S/T; Other: NAVA; Other: s/t; Others; SIMV PRVC + PS; SIMV Volume control + PS; CPAP; PS Pressure support / CPAP; PC Pressure control; SIMV Pressure control + PS
+5,Pulse Oximetry,numerical,97.64,
+6,Heart Rate,numerical,110.64,
+7,Arterial Systolic Pressure,numerical,105.5,
+8,Arterial Diastolic Pressure,numerical,59.39,
+9,Respiratory Rate,numerical,29.77,
+10,Arterial Mean Pressure,numerical,75.39,
+11,FLACC Scale Score,numerical,0.57,
+12,Humpty Dumpty Score,numerical,14.18,
+13,Patient Temperature,numerical,36.53,
+14,Pulse Site,categorical,,Others; NIBP/monitor; Apical; Radial
+15,Pulse Character,categorical,,Irregular; Regular
+16,FLACC Face,categorical,,"0 - No particular expression or smile; 1 - Occassional grimace or frown; 2 - Frequent to constant frown,clenching"
+17,FLACC Activity,categorical,,"2 - Arched, rigid or jerking; 0 - Lying quietly, normal position; 1 - Squirming, shifting, back and forth, tense"
+18,FLACC Cry,categorical,,"1 - Moans or whimpers; occasional; 2 - Crying steadily, screams or sobs; 0 - No cry (awake or asleep)"
+19,Radial Pulse Left,categorical,,1+ thready; Others; 2+ normal; Doppler
+20,Radial Pulse Right,categorical,,1+ thready; Others; 2+ normal; Doppler
+21,Dorsalis Pedis Pulse Left,categorical,,"1+ thready, Doppler; Others; 2+ normal; Doppler; 1+ thready; 1+ thready, 2+ normal"
+22,Dorsalis Pedis Pulse Right,categorical,,"Others; 2+ normal; Doppler; 1+ thready; 1+ thready, 2+ normal"
+23,Oral Care,categorical,,Complete assist; With assist; Others; Self; Refused
+24,Skin Temperature,categorical,,"Warm, Cool; Others; Cold; Cool; Warm"
+25,Cardiac Rhythm,categorical,,"Tachycardia; Normal sinus rhythm, Tachycardia; Bradycardia; Normal sinus rhythm; Others; Normal sinus rhythm, Bradycardia"
+26,Fourth Digit Left Capillary Refill,categorical,,5 seconds; Others; 4 seconds; 3 seconds; < 2 seconds
+27,BP Site,categorical,,Right calf; Others; Left calf; Right Arm; Left arm; Right leg; Left leg
+28,Position Of Patient,categorical,,"HOB flat; Supine; HOB elevated 30 deg, Positions self, Heels floated off bed; Positions self, Ambulatory; Others; Supine, HOB elevated 30 deg, Heels floated off bed, Repositioned using lift; Left, HOB elevated 45 deg, Heels floated off bed; HOB flat, Positions self; HOB elevated 30 deg, Heels floated off bed; Supine, Left, HOB elevated 30 deg, Heels floated off bed; HOB elevated 45 deg, Positions self; Supine, Right, HOB elevated 10 deg; Right, HOB elevated 10 deg; Supine, HOB elevated 45 deg, Heels floated off bed; Right, HOB elevated 30 deg; Supine, Right, HOB elevated 30 deg, Heels floated off bed; HOB elevated 10 deg, Positions self; Supine, HOB flat, Positions self; Supine, HOB elevated 30 deg, Heels floated off bed; Right; Supine, HOB elevated 45 deg; Wheelchair; Positions self; Supine, Left, HOB elevated 10 deg; Supine, HOB elevated 30 deg; Left, HOB elevated 30 deg, Positions self; Supine, HOB elevated 30 deg, Positions self, Ambulatory; Supine, Positions self; Left, HOB elevated 30 deg, Heels floated off bed; Supine, HOB elevated 45 deg, Positions self; Supine, HOB flat, Heels floated off bed; Right, HOB elevated 30 deg, Positions self; Supine, HOB elevated 10 deg, Heels floated off bed; Left, HOB elevated 10 deg, Heels floated off bed; HOB elevated 30 deg, Positions self; Supine, HOB elevated 10 deg; Left, HOB elevated 30 deg; Up in swing; Ambulatory; Supine, Right, HOB elevated 30 deg; Up in chair; Supine, HOB elevated 30 deg, Positions self, Heels floated off bed; Supine, Heels floated off bed; HOB elevated 10 deg; Right, HOB elevated 30 deg, Heels floated off bed; Prone; Supine, HOB elevated 30 deg, Positions self; Left, HOB elevated 10 deg; Supine, Left, HOB elevated 30 deg; Held, Positions self; Right, HOB elevated 10 deg, Heels floated off bed; Supine, HOB flat; Supine, HOB elevated 10 deg, Positions self; Left; HOB elevated 30 deg; Held; Supine, Right; HOB elevated 90 deg, Positions self; Left, HOB elevated 30 deg, Positions self, Heels floated off bed; Supine, Left; Up in chair, Positions self; HOB elevated 45 deg"
+29,Level of Consciousness,categorical,,Obtunded; Others; Sleeping; Lethargic; Sedated; Unable to assess; Non-responsive; Alert; Drowsy
+30,Temperature Site,categorical,,Other: Axillary probe; Others; Foley probe; Other: axillary probe; Esophageal probe; Oral; Rectal; Other: Axillary Probe; Axillary; Rectal  probe; Temporal scan
+31,Current Diet,categorical,,"Clear liquid diet; Regular (4 yrs & >) diet, Formula diet; Dysphagia diet; NPO; Others; Formula diet; Formula diet, Breast feeding diet; Pureed diet; Breast feeding diet; Toddler (1-3 yrs) diet, Formula diet; Full liquid diet; Diabetes diet; Bone marrow transplant diet; NPO, Formula diet; Regular (4 yrs & >) diet; Toddler (1-3 yrs) diet; Renal diet"
+32,Skin Color,categorical,,"Normal for ethnicity, Pink; Pale, Pink; Normal for ethnicity; Pink, Normal for ethnicity; Pink, Pale; Pale; Others; Normal for ethnicity, Pale; Pink; Pink, Normal for ethnicity, Pale; Jaundiced"
+33,Mouth Care,categorical,,"Peridex; Others; Peridex, Sterile Water; Sterile Water"
+34,Dose Weight,numerical,27.35,
+35,Patient Weight,numerical,26.36,
+36,Base Deficit Venous,numerical,-8.18,
+37,Sodium whole blood,numerical,141.29,
+38,HCO3v,numerical,24.22,
+39,"Hgb, Calculated",numerical,10.49,
+40,Potassium whole blood,numerical,3.79,
+41,Hematocrit,numerical,30.44,
+42,PvCO2,numerical,43.96,
+43,iStat Ionized Calcium,numerical,1.27,
+44,pHv,numerical,7.34,
+45,PvO2,numerical,48.83,
+46,Urine pH,numerical,6.33,
+47,Urine Specific Gravity,numerical,1.02,
+48,Urine Ketones,categorical,,Small (15 mg/dl); Moderate (40 mg/dl); Trace (5 mg/dl); Others; Neg; Large (80 mg/dl); Negative; Large (160 mg/dl)
+49,Urine Glucose Dipstick,categorical,,1/10 %/100mg/dL; 2% or > / 2000mg/dL or >; Others; 1/2%/ 500mg/dL; Neg; Negative; 1% / 1000mg/dL; 1/4% /250mg/dL
+50,Urine Blood Dipstick,categorical,,Others; Neg; Negative
+51,Urine Protein Dipstick,categorical,,Trace; Others; 30; Neg; 1+/30mg/dL; Negative
+52,Sodium(NA),numerical,141.06,
+53,Plan of Care,numerical,1.0,
+54,Oxygen Flow Rate,numerical,5.82,
+55,Platelet Count,numerical,223.77,
+56,MCH,numerical,28.88,
+57,iStat Hemoglobin,numerical,10.09,
+58,Carbon Dioxide (CO2),numerical,23.86,
+59,RBC,numerical,3.53,
+60,MPV,numerical,8.37,
+61,MCHC,numerical,33.76,
+62,Total Protein,numerical,5.77,
+63,Chloride (CL),numerical,109.32,
+64,Anion Gap,numerical,7.25,
+65,UREA Nitrogen (BUN),numerical,17.94,
+66,APTT,numerical,50.36,
+67,Creatinine,numerical,0.66,
+68,Bilirubin Direct,numerical,1.58,
+69,Bilirubin Total,numerical,2.33,
+70,WBC,numerical,11.01,
+71,Total Albumin,numerical,2.99,
+72,Alkaline Phosphatase,numerical,206.29,
+73,Glucose,numerical,138.28,
+74,Phosphorus,numerical,4.05,
+75,Calcium,numerical,8.71,
+76,PT,numerical,18.32,
+77,INR,numerical,1.57,
+78,MCV,numerical,85.53,
+79,RDW,numerical,16.06,
+80,Eosinophils,numerical,2.19,
+81,Basophils,numerical,0.46,
+82,Lymphs,numerical,21.52,
+83,ABS Eosinophils,numerical,0.2,
+84,Absolute Neutrophils,numerical,7.55,
+85,Absolute Monocytes,numerical,0.85,
+86,Neutrophils,numerical,66.3,
+87,Monocyte,numerical,8.33,
+88,ABS Basophils,numerical,0.05,
+89,Absolute lymphocytes,numerical,1.92,
+90,Type of Differential,categorical,,Automated Differential; Others; Image Differential Performed; Manual Diff Performed
+91,Potassium (K),numerical,3.91,
+92,AST/SGOT,numerical,189.46,
+93,Magnesium,numerical,2.06,
+94,ALT (SGPT),numerical,182.49,
+95,Emotional Support Provided,categorical,,Yes
+96,Vancomycin Trough,numerical,12.97,
+97,Body Mass Index,numerical,19.05,
+98,Body Surface Area,numerical,0.83,
+99,Height,numerical,111.34,
+100,Heart Rhythm,categorical,,Others; Regular
+101,Gait,categorical,,"Normal; Others; Unsteady; Steady; Normal, Steady; Unable to assess"
+102,Affect/Behavior,categorical,,"Appropriate, Cooperative; Others; Appropriate, Calm; Calm; Appropriate, Calm, Cooperative; Appropriate; Calm, Cooperative"
+103,SpO2 Site,categorical,,Right hand; Right foot; Post-ductal; Others; Pre-ductal; Left hand; Left foot
+104,CAPILLARY BASE DEFICIT iStat,numerical,-5.1,
+105,CAPILLARY HCO3,numerical,28.16,
+106,CAPILLARY pCO2 iStat,numerical,69.88,
+107,CAPILLARY PH iStat,numerical,7.38,
+108,Procalcitonin,numerical,5.91,
+109,Absolute Bands,numerical,0.48,
+110,Hgb Venous,numerical,10.91,
+111,Metamyelocytes,numerical,2.71,
+112,Absolute Metamyelocytes,numerical,0.41,
+113,Bands,numerical,3.74,
+114,C-Reactive Protein,numerical,4.7,
+115,Fibrinogen Level,numerical,289.5,
+116,Lactate Whole Blood,numerical,2.48,
+117,Microcytosis,categorical,,Others; 1+
+118,Base Deficit Arterial,numerical,-4.32,
+119,PaO2,numerical,125.19,
+120,Bicarbonate Level,numerical,25.86,
+121,PaCO2,numerical,43.0,
+122,pHa,numerical,7.39,
+123,Blood Type Donor,categorical,,O Pos; Others; B Pos; A Neg; A Pos; O Neg
+124,Blood Product Type,numerical,1.0,
+125,Blood Product Number,numerical,1.0,
+126,Stool Volume,numerical,87.12,
+127,Stool Color,categorical,,"Brown; Light, Yellow; Light, Brown, Green; Yellow; Others; Dark, Green; Brown, Yellow; Light, Brown; Green; Light, Green; Brown, Green; Dark, Brown; Green, Yellow; Light, Brown, Yellow"
+128,Gestational Age,numerical,247.05,
+129,Osmolality,numerical,306.61,
+130,Myelocytes,numerical,2.41,
+131,Atypical Lymphs,numerical,2.43,
+132,Absolute Myelocytes,numerical,0.39,
+133,PRBC,numerical,98.73,
+134,Passing Flatus,categorical,,No; Yes
+135,Wong Baker FACES Assessment Score,categorical,,4 - Hurts Little More; Others; 6 - Hurts Even More; 0 - No hurts; 2 - Hurts Little Bit
+136,Cough,categorical,,"Intermittent; Normal; Normal, Productive; Harsh, Intermittent, Moist; Hacking, Intermittent; Harsh, Moist; Harsh, Occasional; Others; Normal, Moist; Non-productive; Moist, Occasional; Intermittent, Productive; Intermittent, Loose, Moist; Non-productive, Weak; Intermittent, Moist, Weak; Intermittent, Loose, Weak; Loose, Moist; Harsh; Moist, Occasional, Productive; Harsh, Intermittent; Harsh, Intermittent, Productive; Normal, Non-productive, Intermittent; Weak; Intermittent, Loose, Productive; Intermittent, Productive, Weak; Intermittent, Loose, Moist, Productive; Non-productive, Harsh, Intermittent; Intermittent, Loose; Occasional, Productive; Loose, Moist, Productive; Normal, Intermittent, Productive; Moist, Weak; Occasional; Non-productive, Intermittent; Normal, Occasional; Normal, Intermittent; Normal, Non-productive; Occasional, Productive, Weak; Occasional, Weak; Loose, Moist, Occasional; Loose, Occasional; Productive, Weak; Moist, Productive; Non-productive, Occasional; Intermittent, Moist; Intermittent, Moist, Productive; Moist; Non-productive, Intermittent, Moist; Intermittent, Weak; Loose, Productive; Normal, Harsh; Productive; Harsh, Productive; Moist, Occasional, Weak"
+137,Respiratory Symptoms,categorical,,"Retracting, Tachypnea, Use of accessory muscles; Intermittent tachypnea, Use of accessory muscles; Intermittent tachypnea, Retracting; Use of accessory muscles; Others; Retracting; Snoring; Shallow; Tachypnea, Use of accessory muscles; Intermittent tachypnea, Retracting, Use of accessory muscles; Tachypnea; Wheezing; Intermittent tachypnea"
+138,Beta Hydroxybutyrate Level,numerical,2.47,
+139,Estimated Creatinine Clearance,numerical,98.71,
+140,FiO2,numerical,47.61,
+141,SN CTm Anesthesia Stop Time,numerical,1.0,
+142,"Base Excess, Venous",numerical,5.02,
+143,"Base Excess, Capillary",numerical,5.82,
+144,Brachial Pulse Right,categorical,,1+ thready; Others; 2+ normal
+145,Brachial Pulse Left,categorical,,1+ thready; Others; 2+ normal
+146,Polychromasia,categorical,,Others; 2+; 1+
+147,Anisocytosis,categorical,,Others; 2+; 1+
+148,Tidal Volume Set,numerical,236.24,
+149,Glucose Whole Blood,numerical,230.15,
+150,Tone Newborn,categorical,,Normal; Others; Hypotonic; Hypertonic; Paralyzed with meds
+151,H & P,categorical,,Others; Verified
+152,GGT,numerical,190.72,
+153,Hgb - Mixed Venous,numerical,11.09,
+154,Reg STK Rea IV Thrombolytic Not Given vB,numerical,1.0,
+155,Femoral Pulse Left,categorical,,1+ thready; Others; 2+ normal; Doppler
+156,Femoral Pulse Right,categorical,,1+ thready; Others; 2+ normal; Doppler
+157,Base Excess Arterial,numerical,5.01,
+158,Central Venous Pressure,numerical,9.06,
+159,Posttibial Pulse Right,categorical,,1+ thready; Others; 2+ normal; Doppler
+160,Posttibial Pulse Left,categorical,,1+ thready; Others; 2+ normal; Doppler
+161,Intracranial Pressure (ICP),numerical,9.99,
+162,Cerebral Perfusion Pressure (CPP),numerical,73.41,
+163,Tacrolimus LC/MS/MS,numerical,8.47,
+164,Supine Pulse,numerical,82.28,
+165,Sitting Pulse,numerical,91.09,
+166,Sitting Diastolic BP,numerical,71.88,
+167,Standing Diastolic BP,numerical,71.37,
+168,Carbon dioxide whole blood,numerical,24.0,
+169,Chloride whole blood,numerical,114.69,
+170,Urea nitrogen whole blood,numerical,14.29,
+171,Creatinine Whole Blood,numerical,0.46,
+172,Lactate Istat Venous,numerical,1.15,
+173,"Hgb, Arterial",numerical,8.55,
+174,Standing Pulse,numerical,106.97,
+175,Supine Diastolic BP,numerical,70.4,
