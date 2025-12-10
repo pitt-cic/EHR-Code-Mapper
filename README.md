@@ -4,6 +4,7 @@
 | Section | Description |
 |---------|-------------|
 | [Overview](#overview) | See the motivation behind this project |
+| [Demo Video](#demo-video) | Watch a demo of this project |
 | [Description](#description) | Learn about the problem and our AI-driven solution |
 | [Deployment](#deployment) | How to install and deploy the solution |
 | [Usage](#usage) | How to use EHR Code Mapper |
@@ -19,6 +20,9 @@ EHR Code Mapper is an AI-powered pipeline that automatically maps proprietary El
 This project was developed to address a critical challenge in healthcare data interoperability. Healthcare organizations use proprietary codes to document medical tests, procedures, and observations. When researchers need to analyze data from multiple healthcare systems that use different code sets, these proprietary codes must be mapped to standardized terminologies. Manual mapping is time-consuming, error-prone, and not an effective use of researchers' time.
 
 The platform combines semantic similarity search using vector embeddings with AI-powered reasoning to provide accurate, explainable code mappings. For each proprietary code, the system returns the top 3 most relevant standard codes along with detailed reasoning for each match.
+
+## Demo Video
+https://github.com/user-attachments/assets/d45084ff-3509-4308-8702-a316879c05dc
 
 ## Description
 
