@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import {Stack, Tags} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
-import * as s3Vectors from 'cdk-s3-vectors';
 
 export class CodeMappingStack extends Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -9,32 +8,38 @@ export class CodeMappingStack extends Stack {
         Tags.of(this).add('Project', 'code-field-mapping');
         Tags.of(this).add('ManagedBy', 'cdk');
         
-        // Create a vector bucket
-        const vectorBucket = new s3Vectors.Bucket(this, 'VectorBucket', {
-            vectorBucketName: 'code-mapping-vector-bucket',
+        const bucketName = 'code-mapping-vector-bucket';
+        
+        const vectorBucket = new cdk.CfnResource(this, 'VectorBucket', {
+            type: 'AWS::S3Vectors::VectorBucket',
+            properties: {
+                VectorBucketName: bucketName,
+            },
         });
 
-        // Create vector index
-        const vectorIndex = new s3Vectors.Index(this, 'VectorIndex', {
-            vectorBucketName: vectorBucket.vectorBucketName,
-            indexName: 'code-mapping-vector-index',
-            dataType: 'float32',
-            dimension: 1024,
-            distanceMetric: 'cosine',
+        const vectorIndex = new cdk.CfnResource(this, 'VectorIndex', {
+            type: 'AWS::S3Vectors::Index',
+            properties: {
+                VectorBucketName: bucketName,
+                IndexName: 'code-mapping-vector-index',
+                DataType: 'float32',
+                Dimension: 1024,
+                DistanceMetric: 'cosine',
+            },
         });
-        vectorIndex.node.addDependency(vectorBucket);
+        vectorIndex.addDependency(vectorBucket);
 
-        // Outputs
+
         new cdk.CfnOutput(this, 'VectorBucketName', {
-            value: vectorBucket.vectorBucketName,
+            value: bucketName,
             description: 'S3 Vectors bucket name',
             exportName: 'CodeMappingVectorBucketName',
         });
 
-        new cdk.CfnOutput(this, 'VectorIndexName', {
-            value: vectorIndex.indexName,
-            description: 'S3 Vectors index name',
-            exportName: 'CodeMappingVectorIndexName',
+        new cdk.CfnOutput(this, 'VectorIndexArn', {
+            value: vectorIndex.getAtt('IndexArn').toString(),
+            description: 'S3 Vectors index ARN',
+            exportName: 'CodeMappingVectorIndexArn',
         });
     }
 }

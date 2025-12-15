@@ -53,11 +53,13 @@ def csv_to_fhir_conceptmap(csv_path, output_path=None):
     # Process each row to collect all targets per proprietary code, split up by the target system
     code_data = {}
     
+    # Detect format: validated (single option) or standard (3 options)
+    is_validated_format = 'validated_system' in df.columns
+    
     for _, row in df.iterrows():
         prop_code = str(row['prop_code'])
         prop_display = row['prop_display']
         context = row['context']
-        # Set correct data type
         data_type = "numerical" if "numerical" in context else "categorical"
         
         if prop_code not in code_data:
@@ -68,36 +70,58 @@ def csv_to_fhir_conceptmap(csv_path, output_path=None):
                 "snomed_targets": []
             }
         
-        # Process each of the 3 options
-        for i in range(1, 4):
-            system = row[f'option_{i}_system']
-            code = row[f'option_{i}_code']
-            display = row[f'option_{i}_display']
-            rank = row[f'option_{i}_rank']
-            reasoning = row[f'option_{i}_reasoning']
+        # Handle validated format (single option)
+        if is_validated_format:
+            system = row['validated_system']
+            code = row['validated_code']
+            display = row['validated_display']
+            rank = row['validated_rank']
+            reasoning = row['validated_reasoning']
             
-            if pd.isna(system) or pd.isna(code):
-                continue
-            
-            target = {
-                "code": str(code),
-                "display": display,
-                "relationship": "equivalent",
-                "comment": reasoning,
-                "property": [
-                    {"code": "preferenceRank", "valueInteger": i}
-                ]
-            }
-            
-            # This is the relative frequency rank from LOINC. Currently SNOMED doesn't have this data.
-            if not pd.isna(rank) and rank != -1:
-                target["property"].append({"code": "frequencyRank", "valueInteger": int(rank)})
-            
-            # Add to the correct target system
-            if system == "LOINC":
-                code_data[prop_code]["loinc_targets"].append(target)
-            elif system == "SNOMED CT":
-                code_data[prop_code]["snomed_targets"].append(target)
+            if not pd.isna(system) and not pd.isna(code):
+                target = {
+                    "code": str(code),
+                    "display": display,
+                    "relationship": "equivalent",
+                    "comment": reasoning,
+                    "property": [{"code": "preferenceRank", "valueInteger": 1}]
+                }
+                
+                if not pd.isna(rank) and rank != -1:
+                    target["property"].append({"code": "frequencyRank", "valueInteger": int(rank)})
+                
+                if system == "LOINC":
+                    code_data[prop_code]["loinc_targets"].append(target)
+                elif system == "SNOMED CT":
+                    code_data[prop_code]["snomed_targets"].append(target)
+        
+        # Handle standard format (3 options)
+        else:
+            for i in range(1, 4):
+                system = row[f'option_{i}_system']
+                code = row[f'option_{i}_code']
+                display = row[f'option_{i}_display']
+                rank = row[f'option_{i}_rank']
+                reasoning = row[f'option_{i}_reasoning']
+                
+                if pd.isna(system) or pd.isna(code):
+                    continue
+                
+                target = {
+                    "code": str(code),
+                    "display": display,
+                    "relationship": "equivalent",
+                    "comment": reasoning,
+                    "property": [{"code": "preferenceRank", "valueInteger": i}]
+                }
+                
+                if not pd.isna(rank) and rank != -1:
+                    target["property"].append({"code": "frequencyRank", "valueInteger": int(rank)})
+                
+                if system == "LOINC":
+                    code_data[prop_code]["loinc_targets"].append(target)
+                elif system == "SNOMED CT":
+                    code_data[prop_code]["snomed_targets"].append(target)
     
     # Build groups from collected data
     for prop_code, data in code_data.items():
@@ -139,4 +163,5 @@ def csv_to_fhir_conceptmap(csv_path, output_path=None):
 
 # Create the FHIR output from the CSV file created in the mapping process
 if __name__ == "__main__":
-    csv_to_fhir_conceptmap("ehr_code_mappings.csv")
+    csv_path = input("Enter the CSV file path: ").strip()
+    csv_to_fhir_conceptmap(csv_path)
