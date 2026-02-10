@@ -274,7 +274,6 @@ EHR Code Mapper is an open-source project developed by the University of Pittsbu
 
 **Development Team:**
 - [Gary Farrell](https://www.linkedin.com/in/gary-farrell/)
-- [Varun Shelke](https://www.linkedin.com/in/vashelke/)
 
 **Project Leadership:**
 - Technical Lead: [Maciej Zukowski](https://www.linkedin.com/in/maciejzukowski/) - Solutions Architect, Amazon Web Services (AWS)
