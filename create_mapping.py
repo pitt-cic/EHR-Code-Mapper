@@ -5,7 +5,9 @@ import pandas as pd
 import asyncio
 import time
 import os
-from concurrent.futures import ThreadPoolExecutor
+import threading
+from threading import Thread, Lock
+from queue import Queue, Empty
 from pydantic_ai import Agent
 from pydantic import BaseModel
 from typing import List
@@ -18,10 +20,14 @@ class OptionResult(BaseModel):
 class MatchingResult(BaseModel):
     matches: List[OptionResult]
 
+class EnhancedText(BaseModel):
+    text: str
+
 # Get configuration from environment or use defaults
 VECTOR_BUCKET_NAME = 'code-mapping-vector-bucket'
 VECTOR_INDEX_NAME = 'code-mapping-vector-index'
 AWS_REGION = 'us-east-1'
+LLM_MODEL_ID = 'us.anthropic.claude-sonnet-4-5-20250929-v1:0'
 
 # Initialize AWS clients
 print("Initializing AWS clients...")
@@ -31,10 +37,41 @@ print(f"AWS clients initialized (region: {AWS_REGION})")
 print(f"Using vector bucket: {VECTOR_BUCKET_NAME}")
 print(f"Using vector index: {VECTOR_INDEX_NAME}")
 
-# Initialize agent
-print("Initializing agent...")
-agent = Agent(
-    'bedrock:us.anthropic.claude-sonnet-4-5-20250929-v1:0',
+# Initialize agents
+print("Initializing agents...")
+
+acronym_agent = Agent(
+    f'bedrock:{LLM_MODEL_ID}',
+    instructions="""You are a medical terminology expert. Expand acronyms and abbreviations to standard medical terms.
+
+If the input is an acronym or abbreviation, expand it using standard medical terminology. Keep it concise - add only 1-5 words maximum.
+
+Return ONLY the expanded term. Match LOINC/SNOMED naming conventions.
+
+Examples:
+- "CBC" → "Complete blood count"
+- "BP" → "Blood pressure"
+- "RBC" → "Red blood cell count"
+""",
+    output_type=EnhancedText
+)
+
+enhancement_agent = Agent(
+    f'bedrock:{LLM_MODEL_ID}',
+    instructions="""You are a medical terminology expert helping map EHR codes to LOINC/SNOMED standards.
+
+We got poor embedding matches for the original display text, so we need an improved phrase.
+
+Return a 2-5 word phrase using standard medical terminology that matches LOINC/SNOMED naming conventions.
+
+Focus on the core clinical concept. Avoid generic words like "documentation", "assessment", "pediatric".
+
+Return ONLY the improved phrase.""",
+    output_type=EnhancedText
+)
+
+mapping_agent = Agent(
+    f'bedrock:{LLM_MODEL_ID}',
     instructions="""You are a medical coding expert. Match the given proprietary medical code to standard codes.
 
 TASK: Analyze the proprietary medical test and return the 3 best matching standard codes, ranked by relevance.
@@ -87,63 +124,39 @@ OUTPUT: Return exactly 3 matches in ranked order using the specified Pydantic fo
 - The standard code (exact match from options)
 - Brief reasoning (1-2 sentences explaining the clinical/semantic match)
 
-CRITICAL: The "option" field must contain ONLY the code with no prefixes, labels, or additional information.
-
-Do not invent codes. Only select from the provided options.""",
+CRITICAL: The "option" field must contain ONLY the code with no prefixes, labels, or additional information. You MUST select codes exclusively from the provided STANDARD CODE OPTIONS list - do NOT use any codes from your training data that are not in the list below.""",
     output_type=MatchingResult
 )
-print("Agent initialized")
+print("Agents initialized")
 
-def get_embedding_with_enhancement(proprietary_display, row):
+def get_embedding_with_enhancement(proprietary_display, row, thread_name):
+    """Generate embedding for proprietary code and query vector store for similar standard codes"""
     # Remove keywords from end before checking length
-    cleaned_display = proprietary_display.rstrip()
-    if cleaned_display.lower().endswith(' transcribed') or cleaned_display.lower().endswith('-transcribed'):
-        cleaned_display = cleaned_display[:-12].rstrip()
-    elif cleaned_display.lower().endswith(' old') or cleaned_display.lower().endswith('-old'):
-        cleaned_display = cleaned_display[:-4].rstrip()
-    
-    text_to_embed = cleaned_display
+    text_to_embed = proprietary_display.rstrip()
+    if text_to_embed.lower().endswith(" transcribed") or text_to_embed.lower().endswith("-transcribed"):
+        text_to_embed = text_to_embed[:-12].rstrip()
+    elif text_to_embed.lower().endswith(" old") or text_to_embed.lower().endswith("-old"):
+        text_to_embed = text_to_embed[:-4].rstrip()
     
     # Check if proprietary_display is short or an abbreviation and augment if needed
-    has_capitalized_word = any(len(word) >= 3 and word.isupper() for word in cleaned_display.split())
-    if len(cleaned_display) <= 5 or has_capitalized_word:
+    has_capitalized_word = any(len(word) >= 3 and word.isupper() for word in text_to_embed.split())
+    if len(text_to_embed) <= 5 or has_capitalized_word:
+        print(f"[Thread {thread_name}]   Acronym detected, expanding...")
         # Build context based on type
-        context = f"This is a {row['type']} field."
-        if row['type'] == 'numerical':
-            context += f" Average value: {row['average']}."
-        elif row['type'] == 'categorical':
-            context += f" Categories: {row['categories']}."
+        context = f"This is a {row["type"]} field."
+        if row["type"] == "numerical":
+            context += f" Average value: {row["average"]}."
+        elif row["type"] == "categorical":
+            context += f" Categories: {row["categories"]}."
         
-        claude_response = bedrock.invoke_model(
-            modelId="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-            body=json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1000,
-                "messages": [{
-                    "role": "user",
-                    "content": f"""
-We are mapping EHR codes to LOINC and SNOMED standards.
-
-This display is short or contains acronyms: "{cleaned_display}"
-Context (pediatrics): {context}
-
-If this is an acronym, expand it using standard medical terminology. Keep it concise - add only 1-3 words maximum.
-
-Return ONLY the expanded term, nothing else. Match LOINC/SNOMED naming conventions.
-
-Examples:
-- "CBC" → "Complete blood count"
-- "BP" → "Blood pressure"
-- "RBC" → "Red blood cell count"
-"""
-                }]
-            })
-        )
-        claude_result = json.loads(claude_response["body"].read())
-        text_to_embed = claude_result["content"][0]["text"]
-        print(f"  Possible acronym detected. Enhanced to: {text_to_embed}")
+        topic = f"""Original display: {text_to_embed}. Context (pediatrics): {context}."""
+        
+        result = run_agent_with_backoff(acronym_agent, topic)
+        text_to_embed = result.output.text
+        print(f"[Thread {thread_name}]   Enhanced to: {text_to_embed}")
     
     # Get embedding
+    print(f"[Thread {thread_name}]   Generating embedding...")
     response = bedrock.invoke_model(
         modelId="amazon.titan-embed-text-v2:0",
         body=json.dumps({"inputText": text_to_embed})
@@ -152,6 +165,7 @@ Examples:
     embedding = model_response["embedding"]
     
     # Query vector store
+    print(f"[Thread {thread_name}]   Querying vector store...")
     response = s3vectors.query_vectors(
         vectorBucketName=VECTOR_BUCKET_NAME,
         indexName=VECTOR_INDEX_NAME,
@@ -164,42 +178,22 @@ Examples:
     # Check if best match distance is too high and retry with improved text
     if response["vectors"] and response["vectors"][0]["distance"] > 0.65:
         best_distance = response["vectors"][0]["distance"]
+        print(f"[Thread {thread_name}]   Poor match (distance: {best_distance:.3f}), re-enhancing...")
         # Build context based on type
-        context = f"This is a {row['type']} field."
-        if row['type'] == 'numerical':
-            context += f" Average value: {row['average']}."
-        elif row['type'] == 'categorical':
-            context += f" Categories: {row['categories']}."
+        context = f"This is a {row["type"]} field."
+        if row["type"] == "numerical":
+            context += f" Average value: {row["average"]}."
+        elif row["type"] == "categorical":
+            context += f" Categories: {row["categories"]}."
         
-        print(f"  Poor embedding results (distance: {best_distance:.3f}). Re-enhancing...")
+        topic = f"""Original display: {text_to_embed}. Context (pediatrics): {context}"""
         
-        claude_response = bedrock.invoke_model(
-            modelId="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-            body=json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1000,
-                "messages": [{
-                    "role": "user",
-                    "content": f"""
-We are mapping this EHR display to LOINC/SNOMED codes, but got poor embedding matches.
-
-Original display: {text_to_embed}
-Context (pediatrics): {context}
-
-Return a 2-5 word phrase using standard medical terminology that matches LOINC/SNOMED naming conventions.
-
-Focus on the core clinical concept. Avoid generic words like "documentation", "assessment", "pediatric".
-
-Return ONLY the improved phrase, nothing else.
-"""
-                }]
-            })
-        )
-        claude_result = json.loads(claude_response["body"].read())
-        text_to_embed = claude_result["content"][0]["text"]
-        print(f"  Re-enhanced to: {text_to_embed}")
+        result = run_agent_with_backoff(enhancement_agent, topic)
+        text_to_embed = result.output.text
+        print(f"[Thread {thread_name}]   Re-enhanced to: {text_to_embed}")
         
         # Re-embed with improved text
+        print(f"[Thread {thread_name}]   Re-generating embedding...")
         response = bedrock.invoke_model(
             modelId="amazon.titan-embed-text-v2:0",
             body=json.dumps({"inputText": text_to_embed})
@@ -208,6 +202,7 @@ Return ONLY the improved phrase, nothing else.
         embedding = model_response["embedding"]
         
         # Re-query vector store
+        print(f"[Thread {thread_name}]   Re-querying vector store...")
         response = s3vectors.query_vectors(
             vectorBucketName=VECTOR_BUCKET_NAME,
             indexName=VECTOR_INDEX_NAME,
@@ -218,10 +213,10 @@ Return ONLY the improved phrase, nothing else.
         )
     
     best_distance = response["vectors"][0]["distance"] if response["vectors"] else None
-    print(f"  Found {len(response['vectors'])} similar codes, best distance: {best_distance:.3f}")
+    print(f"[Thread {thread_name}]   Found {len(response["vectors"])} codes, best distance: {best_distance:.3f}")
     return response["vectors"]
 
-def run_with_backoff(topic, max_retries=5):
+def run_agent_with_backoff(agent, topic, max_retries=8):
     """Handle bedrock throttling with exponential backoff"""
     for attempt in range(max_retries):
         try:
@@ -235,148 +230,170 @@ def run_with_backoff(topic, max_retries=5):
         except Exception as e:
             if "ThrottlingException" in str(e) and attempt < max_retries - 1:
                 wait_time = (2 ** attempt) + (time.time() % 1)
-                print(f"Throttled, waiting {wait_time:.1f}s before retry {attempt + 1}")
                 time.sleep(wait_time)
             else:
                 raise e
 
-def process_batch(batch_data):
-    """Process a batch of test cases in parallel"""
-    results = []
-    batch_start = time.time()
-    success_count = 0
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(run_with_backoff, item['topic']) for item in batch_data]
-        for i, future in enumerate(futures):
-            try:
-                result = future.result()
-                results.append({'result': result, 'metadata': batch_data[i]})
-                success_count += 1
-            except Exception as e:
-                print(f"  Item {i+1} error: {e}")
-                results.append({'result': None, 'metadata': batch_data[i]})
-    batch_elapsed = time.time() - batch_start
-    print(f"  Successfully processed {success_count} of {len(batch_data)} items in {batch_elapsed:.1f}s")
-    return results
-
-# Load biomarker data
-while True:
-    file_path = input("Enter the path to your biomarker CSV file (or 'q' to quit): ").strip()
-    
-    if file_path.lower() == 'q':
-        print("Exiting.")
-        exit(0)
-    
-    if not os.path.exists(file_path):
-        print(f"Error: File {file_path} does not exist. Try again.")
-        continue
-    
-    if not file_path.lower().endswith('.csv'):
-        print("Error: File must be a CSV file. Try again.")
-        continue
-    
+def process_item_end_to_end(row, idx, total, results_list, lock):
+    """Process a single item from embedding through mapping"""
     try:
-        biomarker_df = pd.read_csv(file_path)
-        print("Input data loaded")
-        break
-    except Exception as e:
-        print(f"Error reading CSV: {e}. Try again.")
-        continue
-
-# Prepare test cases using the embedding system
-print("Preparing test cases with embedding system")
-test_cases = []
-for idx, row in biomarker_df.iterrows():
-    prop_code = str(row['proprietary_code']) if pd.notna(row['proprietary_code']) else 'N/A'
-    prop_display = str(row['proprietary_display']) if pd.notna(row['proprietary_display']) else ''
-    
-    print(f"Processing row {idx + 1}/{len(biomarker_df)}: {prop_display}")
-    
-    if prop_display:
-        options = get_embedding_with_enhancement(prop_display, row)
+        prop_code = str(row["proprietary_code"]) if pd.notna(row["proprietary_code"]) else "N/A"
+        prop_display = str(row["proprietary_display"]) if pd.notna(row["proprietary_display"]) else ""
+        
+        if not prop_display:
+            return
+        
+        print(f"[Thread {threading.current_thread().name}] Processing {idx + 1}/{total}: {prop_display}")
+        
+        # Step 1: Get embedding and similar codes
+        options = get_embedding_with_enhancement(prop_display, row, threading.current_thread().name)
         
         if not options:
-            continue
+            print(f"[Thread {threading.current_thread().name}] No options found for {prop_display}")
+            return
         
-        # Format options for the agent
+        # Step 2: Format embedding results for mapping agent
         options_text = []
         for opt in options:
             metadata = opt["metadata"]
             code = metadata["code"]
-            display = metadata.get('display', 'N/A')
-            rank = metadata.get('rank', '-1')
+            display = metadata.get("display", "N/A")
+            rank = metadata.get("rank", "-1")
             options_text.append(f"Code: {code}, Display: {display}, Rank: {rank}.")
         
-        # Build context
-        context = f"Type: {row['type']}"
-        if row['type'] == 'numerical':
-            context += f", Average: {row['average']}"
-        elif row['type'] == 'categorical':
-            context += f", Categories: {row['categories']}"
+        # Build context for CSV output
+        context = f"Type: {row["type"]}"
+        if row["type"] == "numerical":
+            context += f", Average: {row["average"]}"
+        elif row["type"] == "categorical":
+            context += f", Categories: {row["categories"]}"
         
         # Build topic for agent
         topic = f"Proprietary Code: {prop_display}\n"
-        if row['type'] == 'numerical':
-            topic += f"Average Value: {row['average']}\n"
-        if row['type'] == 'categorical':
-            topic += f"Categories: {row['categories']}\n"
+        if row["type"] == "numerical":
+            topic += f"Average Value: {row["average"]}\n"
+        if row["type"] == "categorical":
+            topic += f"Categories: {row["categories"]}\n"
         
         topic += "STANDARD CODE OPTIONS:\n" + "\n".join(options_text)
         
-        test_cases.append({
-            'topic': topic,
-            'prop_code': prop_code,
-            'prop_display': prop_display,
-            'context': context,
-            'options': options
-        })
-
-# Process in batches
-print(f"Processing {len(test_cases)} mappings in batches of 3")
-all_mappings = []
-batch_size = 3
-
-for i in range(0, len(test_cases), batch_size):
-    batch = test_cases[i:i+batch_size]
-    print(f"Processing batch {i//batch_size + 1}/{(len(test_cases) + batch_size - 1)//batch_size}")
-    
-    batch_results = process_batch(batch)
-    
-    for batch_result in batch_results:
-        if batch_result['result'] is None:
-            continue
-            
-        result = batch_result['result']
-        metadata = batch_result['metadata']
+        # Step 3: Run agent to get mappings
+        result = run_agent_with_backoff(mapping_agent, topic)
         
-        # Create one row with all 3 options
+        # Step 4: Format result
         mapping_row = {
-            'prop_code': metadata['prop_code'],
-            'prop_display': metadata['prop_display'],
-            'context': metadata['context']
+            "prop_code": prop_code,
+            "prop_display": prop_display,
+            "context": context
         }
         
         for i, match in enumerate(result.output.matches, 1):
             # Find the matching option to get system, rank and display
-            rank = '-1'
-            display = 'N/A'
-            system = 'N/A'
-            for opt in metadata['options']:
+            rank = "-1"
+            display = "N/A"
+            system = "N/A"
+            for opt in options:
                 if opt["metadata"]["code"] == match.option:
-                    rank = opt["metadata"].get('rank', '-1')
-                    display = opt["metadata"].get('display', 'N/A')
-                    system = opt["metadata"].get('system', 'N/A')
+                    rank = opt["metadata"].get("rank", "-1")
+                    display = opt["metadata"].get("display", "N/A")
+                    system = opt["metadata"].get("system", "N/A")
                     break
             
-            mapping_row[f'option_{i}_system'] = system
-            mapping_row[f'option_{i}_code'] = match.option
-            mapping_row[f'option_{i}_display'] = display
-            mapping_row[f'option_{i}_rank'] = rank
-            mapping_row[f'option_{i}_reasoning'] = match.reasoning
+            mapping_row[f"option_{i}_system"] = system
+            mapping_row[f"option_{i}_code"] = match.option
+            mapping_row[f"option_{i}_display"] = display
+            mapping_row[f"option_{i}_rank"] = rank
+            mapping_row[f"option_{i}_reasoning"] = match.reasoning
         
-        all_mappings.append(mapping_row)
+        # Step 5: Add to results (thread-safe)
+        with lock:
+            results_list.append(mapping_row)
+        
+        print(f"[Thread {threading.current_thread().name}] Completed {idx + 1}/{total}")
+        
+    except Exception as e:
+        print(f"[Thread {threading.current_thread().name}] Error processing row {idx + 1}: {e}")
 
-# Save mappings to CSV
-mappings_df = pd.DataFrame(all_mappings)
-mappings_df.to_csv('ehr_code_mappings.csv', index=False)
-print(f"Mapping complete. Created {len(all_mappings)} mappings saved to 'ehr_code_mappings.csv'")
+def worker_thread(work_queue, results_list, lock):
+    """Worker that pulls items from queue and processes them"""
+    while True:
+        try:
+            item = work_queue.get(timeout=1)
+            if item is None:
+                break
+            idx, row, total = item
+            process_item_end_to_end(row, idx, total, results_list, lock)
+        except Empty:
+            break  # Queue empty, exit
+        except Exception as e:
+            print(f"[{threading.current_thread().name}] Unexpected error: {e}")
+            continue  # Log error but keep processing other items
+
+def main():
+    # Load biomarker data
+    while True:
+        file_path = input("Enter the path to your biomarker CSV file (or 'q' to quit): ").strip()
+        
+        if file_path.lower() == "q":
+            print("Exiting.")
+            exit(0)
+        
+        if not os.path.exists(file_path):
+            print(f"Error: File {file_path} does not exist. Try again.")
+            continue
+        
+        if not file_path.lower().endswith(".csv"):
+            print("Error: File must be a CSV file. Try again.")
+            continue
+        
+        try:
+            biomarker_df = pd.read_csv(file_path)
+            print("Input data loaded")
+            
+            # Validate required columns
+            required_columns = ["proprietary_code", "proprietary_display", "type", "average", "categories"]
+            missing_columns = [col for col in required_columns if col not in biomarker_df.columns]
+            if missing_columns:
+                print(f"Error: Missing required columns: {', '.join(missing_columns)}")
+                print("Please provide a CSV with all required columns.")
+                continue
+            
+            break
+        except Exception as e:
+            print(f"Error reading CSV: {e}. Try again.")
+
+    # Prepare work distribution
+    num_threads = 4
+    total_rows = len(biomarker_df)
+    results = []
+    results_lock = Lock()
+    work_queue = Queue()
+
+    # Add all work items to queue
+    for idx, row in biomarker_df.iterrows():
+        work_queue.put((idx, row, total_rows))
+
+    # Start threads
+    print(f"\nStarting {num_threads} parallel workers to process {total_rows} items")
+    start_time = time.time()
+
+    threads = []
+    for i in range(num_threads):
+        t = Thread(target=worker_thread, args=(work_queue, results, results_lock), name=f"Worker-{i+1}")
+        t.start()
+        threads.append(t)
+
+    # Wait for all threads to complete
+    for t in threads:
+        t.join()
+
+    elapsed_time = time.time() - start_time
+    print(f"\nAll threads completed in {elapsed_time:.1f}s")
+
+    # Save mappings to CSV
+    mappings_df = pd.DataFrame(results)
+    mappings_df.to_csv("ehr_code_mappings.csv", index=False)
+    print(f"Mapping complete. Created {len(results)} mappings saved to 'ehr_code_mappings.csv'")
+
+if __name__ == "__main__":
+    main()
